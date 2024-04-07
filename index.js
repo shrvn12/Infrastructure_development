@@ -2,6 +2,7 @@ const express = require('express');
 require('dotenv').config();
 const { userRouter } = require('./routes/UserRouter');
 const { connection } = require('./configs/db');
+const { authRouter } = require('./routes/authRouter');
 
 const app = express();
 const port = process.env.port;
@@ -13,6 +14,7 @@ app.get("/", (req, res) => {
 })
 
 app.use('/', userRouter);
+app.use('/', authRouter);
 
 app.listen('4500', async () => {
     try {
