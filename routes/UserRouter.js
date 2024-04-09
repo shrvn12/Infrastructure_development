@@ -6,45 +6,70 @@ require("dotenv").config();
 
 const { userModel } = require("../models/userModel");
 const { errorHandler } = require("../middlewares/errorHandler");
+const { validateId } = require("../middlewares/idValidator");
+const { validate } = require("../middlewares/validator");
+const { authorize } = require("../middlewares/authorizor");
 
 const userRouter = express.Router();
 
-userRouter.post("/register", async (req, res) => {
-  const { firstName, lastName, email, password } = req.body;
+userRouter.post("/register", validate(["firstName", "lastName", "email", "password"]), async (req, res) => {
+    const { firstName, lastName, email, password } = req.body;
 
-  try {
-    // checks for missing required field.
-    let requiredFields = ["firstName", "lastName", "email", "password"];
-
-    for (let field of requiredFields) {
-      if (!req.body[field]) {
-        return errorHandler(res, 400, `Please provide ${field}`);
+    try {
+      //checks if user with same email is already registered
+      const userExists = await userModel.findOne({ email });
+      if (userExists) {
+        return errorHandler(res, 409, "User with this email already exists");
       }
+
+      //hash the password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const payload = {
+        firstName,
+        lastName,
+        email,
+        password: hashedPassword,
+      };
+
+      //create the user
+      const user = new userModel(payload);
+      await user.save();
+      res.status(201).json({ message: "Registered successfully" });
+    } catch (error) {
+      console.error("Error occurred during user registration:", error);
+      errorHandler(res, 500, "Internal Server Error");
     }
+  }
+);
 
-    //checks if user with same email is already registered
-    const userExists = await userModel.findOne({ email });
-    if (userExists) {
-      return errorHandler(res, 409, "User with this email already exists");
+userRouter.get("/user/:id", validateId(userModel), authorize(), async (req, res) => {
+  const id = req.params.id;
+  try {
+    // Check if req.user is set by the middleware
+    if (req.user) {
+      // Create a new object excluding the password field
+      const userData = {
+        _id: req.user._id,
+        firstName: req.user.firstName,
+        lastName: req.user.lastName,
+        email: req.user.email,
+        contact: req.user.contact,
+        team: req.user.team,
+        designation: req.user.designation,
+        permissions: req.user.permissions,
+        accountSettings: req.user.accountSettings,
+        verified: req.user.verified,
+        createdAt: req.user.createdAt,
+        updatedAt: req.user.updatedAt
+      };
+      res.status(200).json(userData);
+    } else {
+      return errorHandler(res, 404, "User not found");
     }
-
-    //hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const payload = {
-      firstName,
-      lastName,
-      email,
-      password: hashedPassword,
-    };
-
-    //create the user
-    const user = new userModel(payload);
-    await user.save();
-    res.status(201).json({ message: "Registered successfully" });
   } catch (error) {
-    console.error("Error occurred during user registration:", error);
-    errorHandler(res, 500, "Internal Server Error");
+    console.error("Error in user route:", error);
+    return errorHandler(res, 500, "Internal Server Error");
   }
 });
 

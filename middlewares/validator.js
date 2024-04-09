@@ -16,10 +16,6 @@ const validate = (args) => {
             if (elem === "password" && !isValidPassword(data.password)) {
                 return errorHandler(res, 400, "Password should be at least 5 characters long");
             }
-
-            if (elem === "first_name" && !isValidName(data.first_name)) {
-                return errorHandler(res, 400, "Please provide a valid first name");
-            }
         }
 
         next();
@@ -34,10 +30,6 @@ function isValidEmail(email) {
 
 function isValidPassword(password) {
     return password.length >= 5;
-}
-
-function isValidName(name) {
-    return name.trim().length > 0;
 }
 
 module.exports = {

@@ -3,17 +3,17 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 const { errorHandler } = require("../middlewares/errorHandler");
-const { authorizer } = require("../middlewares/authorizer");
+const { authenticator } = require("../middlewares/authenticator");
 const { validate } = require("../middlewares/validator");
 
 const authRouter = express.Router();
 
-authRouter.post("/login", validate(["email", "password"]), authorizer, async (req, res) => {
+authRouter.post("/login", validate(["email", "password"]), authenticator, async (req, res) => {
   try {
     const user = req.user;
 
     // Generate token
-    const token = jwt.sign({ email: user.email, id: user._id }, process.env.USER_TOKEN_KEY);
+    const token = jwt.sign({ email: user.email, id: user._id }, process.env.USER_TOKEN_KEY, { expiresIn: '7d' });
 
     // Set token as cookie
     res.cookie('token', token);
