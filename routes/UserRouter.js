@@ -9,6 +9,7 @@ const { errorHandler } = require("../middlewares/errorHandler");
 const { validateId } = require("../middlewares/idValidator");
 const { validate } = require("../middlewares/validator");
 const { authorize } = require("../middlewares/authorizor");
+const { verifyAccess } = require("../middlewares/verifyAccess");
 
 const userRouter = express.Router();
 
@@ -43,11 +44,11 @@ userRouter.post("/register", validate(["firstName", "lastName", "email", "passwo
   }
 );
 
-userRouter.get("/user/:id", validateId(userModel), authorize(), async (req, res) => {
+userRouter.get("/user/:id", validateId(), authorize(), verifyAccess('viewOtherUsersDetails'), async (req, res) => {
   const id = req.params.id;
   try {
-    // Check if req.user is set by the middleware
-    if (req.user) {
+    const user = await userModel.findById(id);
+    if (user) {
       // Create a new object excluding the password field
       const userData = {
         _id: req.user._id,
@@ -70,6 +71,15 @@ userRouter.get("/user/:id", validateId(userModel), authorize(), async (req, res)
   } catch (error) {
     console.error("Error in user route:", error);
     return errorHandler(res, 500, "Internal Server Error");
+  }
+});
+
+userRouter.patch("/user/:id", validateId(), authorize(), async (req, res) => {
+  const { firstName, lastName, accountSettings } = req.body;
+  try {
+    
+  } catch (error) {
+    
   }
 });
 

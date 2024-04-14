@@ -6,10 +6,11 @@ const validateId = (model) => {
     if (id.length !== 24) {
       return errorHandler(res, 400, "Invalid id");
     }
+    if (!model) {
+      return next();
+    }
     try {
       const response = await model.findById(id);
-      console.log(id, response);
-      console.log(model);
       if (response) {
         req.user = response;
         next();

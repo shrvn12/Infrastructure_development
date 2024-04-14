@@ -30,7 +30,6 @@ const authorize = () => {
         }
 
         const user = await userModel.findById(decoded.id);
-        console.log(user, decoded);
         if (!user || user.email !== decoded.email) {
           return errorHandler(res, 401, "User not found or token mismatch");
         }
